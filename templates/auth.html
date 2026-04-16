@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Smart File Organiser – Auth</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='auth.css') }}"
+    />
+  </head>
+
+  <body>
+    <header class="navbar">
+  <div class="logo">Smart File Organiser</div>
+
+  <nav class="nav-links">
+    <a href="/">Home</a>
+    <a href="/logs">Logs</a>
+    <a href="/settings">Settings</a>
+
+    {% if session.get("user") %}
+      <span class="user-badge">👤 {{ session.get("user") }}</span>
+      <a href="/logout" class="login-btn">Logout</a>
+    {% else %}
+      <a href="/auth?mode=login" class="login-btn">Login</a>
+    {% endif %}
+  </nav>
+</header>
+
+    <main class="auth-container">
+      <!-- LEFT PANEL -->
+      <section class="left-panel">
+        <h2>Smart File Organiser</h2>
+        <h1>Organise files instantly</h1>
+        <p>File sorting tool with structured folders and custom rules.</p>
+        <div class="feature">⚡ Automatic sorting</div>
+        <div class="feature">⚙️ Custom rules</div>
+      </section>
+
+      <!-- RIGHT PANEL -->
+      <section class="right-panel">
+        <!-- LOGIN -->
+        <div id="loginPanel" class="panel">
+          <h2>Login</h2>
+          <p>Welcome back.</p>
+
+          <form method="POST" action="/auth?mode=login">
+            <input
+              name="username"
+              type="text"
+              placeholder="Username or Email"
+              required
+            />
+            <input
+              name="password"
+              type="password"
+              placeholder="Password"
+              required
+            />
+            <button type="submit">Sign In</button>
+          </form>
+
+          <p class="switch">
+            No account?
+            <a href="#" onclick="showSignup()">Create one</a>
+          </p>
+        </div>
+
+        <!-- SIGNUP -->
+        <div id="signupPanel" class="panel hidden">
+  <h2>Sign Up</h2>
+  <p>Create your account.</p>
+
+  <form method="POST" action="/auth?mode=signup">
+
+    <input name="username" type="text" placeholder="Username" required>
+
+    <input name="email" type="email" placeholder="Email" required>
+
+    <input name="password" type="password" placeholder="Password" required>
+
+    <button type="submit">Create Account</button>
+  </form>
+
+  <p class="switch">
+    Already have an account?
+    <a href="#" onclick="showLogin()">Login</a>
+  </p>
+</div>
+
+    <script>
+      function showSignup() {
+        document.getElementById("loginPanel").classList.add("hidden");
+        document.getElementById("signupPanel").classList.remove("hidden");
+      }
+
+      function showLogin() {
+        document.getElementById("signupPanel").classList.add("hidden");
+        document.getElementById("loginPanel").classList.remove("hidden");
+      }
+    </script>
+  </body>
+</html>

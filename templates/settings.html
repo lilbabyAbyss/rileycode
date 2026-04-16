@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Settings</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header class="navbar">
+      <div class="logo">Smart File Organiser</div>
+
+      <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/logs">Logs</a>
+        <a href="/settings">Settings</a>
+
+        {% if session.get("user") %}
+        <span class="user-badge">👤 {{ session.get("user") }}</span>
+        <a href="/logout" class="login-btn">Logout</a>
+        {% else %}
+        <a href="/auth?mode=login" class="login-btn">Login</a>
+        {% endif %}
+      </nav>
+    </header>
+
+    <div class="page">
+      <div class="card">
+        <h2>Custom Organisation Rules</h2>
+
+        <form method="POST">
+          <p class="note">
+            Format:<br />
+            Images:.png,.jpg;Documents:.pdf,.docx
+          </p>
+
+          <div class="form-group">
+            <label>Rules</label>
+            <input
+              name="rules"
+              placeholder="Images:.png,.jpg;Documents:.pdf,.docx"
+            />
+          </div>
+
+          <button class="btn-primary">Save Settings</button>
+        </form>
+
+        <p class="note">These rules override default file sorting.</p>
+      </div>
+    </div>
+  </body>
+</html>

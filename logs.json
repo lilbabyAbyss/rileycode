@@ -1,0 +1,32 @@
+{
+    "logs": [
+        {
+            "user_id": "d50d5c66-5d32-49d2-a506-a7f2e6fc19d6",
+            "username": "Abyss",
+            "time": "2026-04-16 10:18:58.567649",
+            "files": 2,
+            "failed": 0
+        },
+        {
+            "user_id": "d50d5c66-5d32-49d2-a506-a7f2e6fc19d6",
+            "username": "Abyss",
+            "time": "2026-04-16 10:19:41.807747",
+            "files": 5,
+            "failed": 1
+        },
+        {
+            "user_id": "d50d5c66-5d32-49d2-a506-a7f2e6fc19d6",
+            "username": "Abyss",
+            "time": "2026-04-16 10:20:32.115892",
+            "files": 5,
+            "failed": 1
+        },
+        {
+            "user_id": "1cc1f659-11d7-41f9-bbce-133102a670ad",
+            "username": "eleanorophelia",
+            "time": "2026-04-16 10:22:47.705475",
+            "files": 1,
+            "failed": 0
+        }
+    ]
+}

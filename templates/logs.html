@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Activity Logs</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='logs.css') }}"
+    />
+  </head>
+
+  <body>
+    <!-- NAVBAR (same style as your other pages) -->
+    <header class="navbar">
+      <div class="logo">Smart File Organiser</div>
+
+      <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/logs">Logs</a>
+        <a href="/settings">Settings</a>
+
+        {% if session.get("user") %}
+        <span class="user-badge">👤 {{ session.get("user") }}</span>
+        <a href="/logout" class="login-btn">Logout</a>
+        {% else %}
+        <a href="/auth?mode=login" class="login-btn">Login</a>
+        {% endif %}
+      </nav>
+    </header>
+
+    <main class="logs-container">
+      <h1>Activity Tracking</h1>
+      <h2>Your Activity Log</h2>
+
+      {% if logs|length == 0 %}
+      <p>No activity yet.</p>
+      {% else %}
+
+      <table class="logs-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Files Organised</th>
+            <th>Failed Files</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td>{{ log.time }}</td>
+            <td>{{ log.files }}</td>
+            <td>{{ log.failed }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% endif %}
+
+      <div class="summary-row">
+        <div class="summary-card">
+          <h3>Total Sessions</h3>
+          <p>{{ summary.total }}</p>
+        </div>
+
+        <div class="summary-card">
+          <h3>Total Files</h3>
+          <p>{{ summary.files }}</p>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+  <head>
+    <title>File Organiser</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header class="navbar">
+      <div class="logo">Smart File Organiser</div>
+
+      <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/logs">Logs</a>
+        <a href="/settings">Settings</a>
+
+        {% if session.get("user") %}
+        <span class="user-badge">👤 {{ session.get("user") }}</span>
+        <a href="/logout" class="login-btn">Logout</a>
+        {% else %}
+        <a href="/auth?mode=login" class="login-btn">Login</a>
+        {% endif %}
+      </nav>
+    </header>
+
+    <div class="page">
+      <div class="card">
+        <h2>Upload Files</h2>
+
+        <form method="POST" enctype="multipart/form-data">
+          <div class="drop-zone">
+            <p>Drag & drop files here or select</p>
+            <input type="file" name="files" multiple />
+          </div>
+
+          <button class="btn-primary" type="submit">Organise Files</button>
+        </form>
+
+        <p class="note">
+          Your files will be sorted and returned as a zip file.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
