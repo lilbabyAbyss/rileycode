@@ -1,130 +1,50 @@
 <!doctype html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <title>Settings & Preferences</title>
-
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='settings.css') }}"
-    />
+    <title>Settings</title>
+    <link rel="stylesheet" href="/static/style.css" />
   </head>
-
   <body>
-    <div class="settings-container">
-      <!-- HEADER -->
-      <div class="settings-header">
-        <h1>Settings & Preferences</h1>
+    <header class="navbar">
+      <div class="logo">Smart File Organiser</div>
 
-        <div class="settings-actions">
-          <button class="reset-btn">Reset</button>
-          <button class="save-btn">Save Changes</button>
-        </div>
-      </div>
+      <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/logs">Logs</a>
+        <a href="/settings">Settings</a>
 
-      <!-- NAVBAR -->
-      <div class="tabs">
-        <button class="tab active" onclick="switchTab(event, 'general')">
-          General
-        </button>
-        <button class="tab" onclick="switchTab(event, 'org')">
-          Organization
-        </button>
-        <button class="tab" onclick="switchTab(event, 'advanced')">
-          Advanced
-        </button>
-        <button class="tab" onclick="switchTab(event, 'extras')">Extras</button>
-      </div>
+        {% if session.get("user") %}
+        <span class="user-badge">👤 {{ session.get("user") }}</span>
+        <a href="/logout" class="login-btn">Logout</a>
+        {% else %}
+        <a href="/auth?mode=login" class="login-btn">Login</a>
+        {% endif %}
+      </nav>
+    </header>
 
-      <!-- CONTENT -->
+    <div class="page">
+      <div class="card">
+        <h2>Custom Organisation Rules</h2>
 
-      <div id="general" class="tab-content active">
-        <div class="settings-card">
-          <h2>General</h2>
+        <form method="POST">
+          <p class="note">
+            Format:<br />
+            Images:.png,.jpg;Documents:.pdf,.docx
+          </p>
 
-          <div class="setting-row">
-            <span>Show notifications</span>
-            <label class="switch">
-              <input type="checkbox" checked />
-              <span class="slider"></span>
-            </label>
+          <div class="form-group">
+            <label>Rules</label>
+            <input
+              name="rules"
+              placeholder="Images:.png,.jpg;Documents:.pdf,.docx"
+            />
           </div>
 
-          <div class="setting-row">
-            <span>Confirm actions</span>
-            <label class="switch">
-              <input type="checkbox" checked />
-              <span class="slider"></span>
-            </label>
-          </div>
-        </div>
-      </div>
+          <button class="btn-primary">Save Settings</button>
+        </form>
 
-      <div id="org" class="tab-content">
-        <div class="settings-card">
-          <h2>Organization</h2>
-
-          <div class="setting-row">
-            <span>Auto-open folder after organizing</span>
-            <label class="switch">
-              <input type="checkbox" />
-              <span class="slider"></span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div id="advanced" class="tab-content">
-        <div class="settings-card">
-          <h2>Advanced</h2>
-
-          <div class="setting-row">
-            <span>Preserve timestamps</span>
-            <label class="switch">
-              <input type="checkbox" checked />
-              <span class="slider"></span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div id="extras" class="tab-content">
-        <div class="settings-card">
-          <h2>Extras</h2>
-
-          <div class="setting-row">
-            <span>Dark Mode</span>
-            <label class="switch">
-              <input type="checkbox" />
-              <span class="slider"></span>
-            </label>
-          </div>
-
-          <div class="setting-row">
-            <span>Animations</span>
-            <label class="switch">
-              <input type="checkbox" checked />
-              <span class="slider"></span>
-            </label>
-          </div>
-        </div>
+        <p class="note">These rules override default file sorting.</p>
       </div>
     </div>
-
-    <!-- JAVASCRIPT -->
-    <script>
-      function switchTab(event, tabId) {
-        document.querySelectorAll(".tab-content").forEach((tab) => {
-          tab.classList.remove("active");
-        });
-
-        document.querySelectorAll(".tab").forEach((btn) => {
-          btn.classList.remove("active");
-        });
-
-        document.getElementById(tabId).classList.add("active");
-        event.currentTarget.classList.add("active");
-      }
-    </script>
   </body>
 </html>
