@@ -1,0 +1,148 @@
+body {
+  background: #f4f6fb;
+  font-family: system-ui, sans-serif;
+  margin: 0;
+}
+
+.settings-container {
+  max-width: 900px;
+  margin: 40px auto;
+  background: white;
+  padding: 30px;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.settings-actions button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.reset-btn {
+  background: #e5e7eb;
+}
+
+.save-btn {
+  background: #6366f1;
+  color: white;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin: 25px 0;
+}
+
+.tab {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: #e5e7eb;
+}
+
+.tab.active {
+  background: #6366f1;
+  color: white;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.settings-card {
+  background: #f9fafb;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.setting-row:last-child {
+  border-bottom: none;
+}
+
+/* Switch */
+.switch {
+  position: relative;
+  width: 46px;
+  height: 24px;
+  display: inline-block;
+}
+
+.switch input {
+  display: none;
+}
+
+.slider {
+  position: absolute;
+  background: #d1d5db;
+  border-radius: 24px;
+  inset: 0;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.slider:before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+input:checked + .slider {
+  background: #6366f1;
+}
+
+input:checked + .slider:before {
+  transform: translateX(22px);
+} /* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 40px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.nav-links a {
+  text-decoration: none;
+  margin-left: 20px;
+  color: #4b5563;
+}
+
+.nav-links a.active,
+.nav-links a:hover {
+  color: #111827;
+}
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}

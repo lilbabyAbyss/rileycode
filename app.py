@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file, redirect, session
+from flask import Flask, render_template, request, redirect, url_for, session
 import os, json, tempfile, uuid
 from zipfile import ZipFile
 from datetime import datetime
@@ -222,23 +222,34 @@ def settings():
     if "user_id" not in session:
         return redirect("/auth?mode=login")
 
-    all_settings = load_json(SETTINGS_FILE)
     user_id = session["user_id"]
 
+    data = load_json(SETTINGS_FILE)
+
+    # ensure user settings exist
+    if user_id not in data:
+        data[user_id] = {
+            "auto_open": False,
+            "notifications": True,
+            "confirm": True,
+            "timestamps": True,
+            "dark_mode": False,
+            "animations": True
+        }
+
     if request.method == "POST":
-        rules = request.form.get("rules")
-        parsed = {}
+        data[user_id] = {
+            "auto_open": "auto_open" in request.form,
+            "notifications": "notifications" in request.form,
+            "confirm": "confirm" in request.form,
+            "timestamps": "timestamps" in request.form,
+            "dark_mode": "dark_mode" in request.form,
+            "animations": "animations" in request.form
+        }
 
-        if rules:
-            for part in rules.split(";"):
-                if ":" in part:
-                    folder, exts = part.split(":")
-                    parsed[folder.strip()] = [e.strip().lower() for e in exts.split(",")]
+        save_json(SETTINGS_FILE, data)
 
-        all_settings[user_id] = {"rules": parsed}
-        save_json(SETTINGS_FILE, all_settings)
-
-    return render_template("settings.html", settings=all_settings.get(user_id, {}))
+    return render_template("settings.html", settings=data[user_id])
 
 
 # ---------------- RUN ----------------
