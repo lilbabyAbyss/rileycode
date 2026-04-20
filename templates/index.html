@@ -5,6 +5,20 @@
     <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
+    <body class="{% if settings.toggles.dark_mode %}dark{% endif %}">
+    <body class="{% if not settings.toggles.animations %}no-anim{% endif %}">
+      {% if confirm_needed %}
+<div class="confirm-box">
+  <p>Are you sure you want to organise these files?</p>
+
+  <form method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="confirm_run" value="yes" />
+    <button type="submit">Yes, continue</button>
+  </form>
+
+  <a href="/">Cancel</a>
+</div>
+{% endif %}
     <header class="navbar">
       <div class="logo">Smart File Organiser</div>
 
@@ -33,6 +47,7 @@
           </div>
 
           <button class="btn-primary" type="submit">Organise Files</button>
+          <input type="hidden" name="confirm_run" value="yes" />
         </form>
 
         <p class="note">

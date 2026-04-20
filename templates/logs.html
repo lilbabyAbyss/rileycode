@@ -3,14 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <title>Activity Logs</title>
+
+    <link rel="stylesheet" href="/static/style.css" />
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='logs.css') }}"
     />
   </head>
 
-  <body>
-    <!-- NAVBAR (same style as your other pages) -->
+  <body
+    class="{% if settings.toggles.dark_mode %}dark{% endif %} {% if not settings.toggles.animations %}no-anim{% endif %}"
+  >
+    <!-- NAVBAR (copied from index exactly) -->
     <header class="navbar">
       <div class="logo">Smart File Organiser</div>
 
@@ -28,6 +32,7 @@
       </nav>
     </header>
 
+    <!-- PAGE CONTENT -->
     <main class="logs-container">
       <h1>Activity Tracking</h1>
       <h2>Your Activity Log</h2>

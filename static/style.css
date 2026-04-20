@@ -243,3 +243,138 @@ form input {
 .signup-link {
   margin-top: 20px;
 }
+/* DARK MODE BASE */
+body.dark {
+  background-color: #1a1c1f;
+  color: #e6e6e6;
+}
+
+/* NAVBAR */
+body.dark .navbar {
+  background: #23262b;
+}
+
+/* LINKS */
+body.dark a {
+  color: #9ecbff;
+}
+
+/* BUTTONS */
+body.dark button,
+body.dark .login-btn {
+  background: #2a2a2a;
+  color: white;
+  border: 1px solid #444;
+}
+
+/* INPUTS */
+body.dark input,
+body.dark textarea {
+  background: #1e1e1e;
+  color: white;
+  border: 1px solid #444;
+}
+
+/* TABLES (for logs page) */
+body.dark table {
+  background: #1e1e1e;
+  color: white;
+}
+
+body.dark th {
+  background: #2a2a2a;
+}
+
+body.dark td {
+  border-color: #333;
+}
+
+/* CARDS / PANELS */
+body.dark .settings-container,
+body.dark .logs-container {
+  background: #181818;
+}
+/* DRAG & DROP BOX */
+body.dark .drop-zone,
+body.dark .upload-box {
+  background: #1e1e1e;
+  border: 2px dashed #444;
+  color: #ddd;
+}
+
+/* HOVER EFFECT */
+body.dark .drop-zone:hover,
+body.dark .upload-box:hover {
+  background: #2a2a2a;
+}
+
+/* CARDS / PANELS */
+body.dark .card,
+body.dark .panel,
+body.dark .settings-container,
+body.dark .logs-container {
+  background: #24272c;
+  border: 1px solid #333;
+}
+
+/* INPUT PLACEHOLDERS */
+body.dark input::placeholder,
+body.dark textarea::placeholder {
+  color: #888;
+}
+
+/* TABLE ROWS */
+body.dark tr:nth-child(even) {
+  background: #1a1a1a;
+}
+
+/* BUTTON HOVER */
+body.dark button:hover {
+  background: #333;
+}
+
+/* FILE LIST / ITEMS (if you have them) */
+body.dark .file-item {
+  background: #222;
+  border: 1px solid #333;
+}
+body.dark .summary-card h3 {
+  color: #bdbdbd;
+}
+
+body.dark .summary-card p {
+  color: #ffffff;
+}
+body.dark .summary-card {
+  background: #24272c;
+  color: #e6e6e6;
+  border: 1px solid #333;
+  border-radius: 10px;
+}
+body.dark .settings-section {
+  background: #24272c;
+  color: #e6e6e6;
+  border: 1px solid #333;
+  border-radius: 12px;
+}
+body.dark .tab {
+  background: #2a2e34;
+  color: #cfcfcf;
+  border: 1px solid #333;
+}
+
+body.dark .tab.active {
+  background: #3a3f47;
+  color: #ffffff;
+}
+.confirm-box {
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #222;
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #444;
+}

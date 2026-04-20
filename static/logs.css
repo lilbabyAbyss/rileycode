@@ -116,3 +116,26 @@
 .nav-links a:hover {
   color: #111827;
 }
+body.dark {
+  background: #121212;
+  color: white;
+}
+.no-anim * {
+  transition: none !important;
+}
+body.dark .summary-card {
+  background: #24272c;
+  color: #e6e6e6;
+  border: 1px solid #333;
+  border-radius: 10px;
+}
+body.dark .summary-card h3 {
+  color: #bdbdbd;
+}
+
+body.dark .summary-card p {
+  color: #ffffff;
+}
+.summary-card {
+  background: white;
+}

@@ -115,3 +115,10 @@ button {
   border-radius: 999px;
   font-size: 12px;
 }
+body.dark {
+  background: #121212;
+  color: white;
+}
+.no-anim * {
+  transition: none !important;
+}

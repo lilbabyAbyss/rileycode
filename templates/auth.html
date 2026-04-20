@@ -11,6 +11,8 @@
   </head>
 
   <body>
+    <body class="{% if settings.toggles.dark_mode %}dark{% endif %}">
+    <body class="{% if not settings.toggles.animations %}no-anim{% endif %}">
     <header class="navbar">
   <div class="logo">Smart File Organiser</div>
 

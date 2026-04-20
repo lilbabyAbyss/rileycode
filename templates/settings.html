@@ -1,17 +1,27 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
-    <title>Settings</title>
-    <link rel="stylesheet" href="/static/style.css" />
+    <meta charset="UTF-8" />
+    <title>Settings & Preferences</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='settings.css') }}"
+    />
   </head>
+
   <body>
+    <!-- NAVBAR (copied from index.html) -->
     <header class="navbar">
       <div class="logo">Smart File Organiser</div>
 
       <nav class="nav-links">
         <a href="/">Home</a>
         <a href="/logs">Logs</a>
-        <a href="/settings">Settings</a>
+        <a href="/settings" class="active-link">Settings</a>
 
         {% if session.get("user") %}
         <span class="user-badge">👤 {{ session.get("user") }}</span>
@@ -22,29 +32,144 @@
       </nav>
     </header>
 
-    <div class="page">
-      <div class="card">
-        <h2>Custom Organisation Rules</h2>
+    <!-- PAGE CONTENT -->
+    <div class="settings-container">
+      <div class="settings-header">
+        <div>
+          <h1>Settings & Preferences</h1>
+          <p class="subtitle">
+            Customize how Smart File Organiser works for you.
+          </p>
+        </div>
 
-        <form method="POST">
-          <p class="note">
-            Format:<br />
-            Images:.png,.jpg;Documents:.pdf,.docx
+        <div class="settings-actions">
+          <button class="reset-btn" type="button" onclick="resetSettings()">
+            Reset
+          </button>
+          <button class="save-btn" form="settingsForm">Save Changes</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active">General</button>
+        <button class="tab">Organization</button>
+        <button class="tab">Advanced</button>
+        <button class="tab">Extras</button>
+      </div>
+
+      <!-- SETTINGS FORM -->
+      <form id="settingsForm" method="POST">
+        <!-- GENERAL TAB -->
+        <div class="settings-section">
+          <h2>Behavior Settings</h2>
+          <p class="section-desc">Configure how the app responds to actions.</p>
+
+          {% macro toggle_row(title, desc, name, value) %}
+          <div class="setting-row">
+            <div class="setting-info">
+              <strong>{{ title }}</strong>
+              <p class="setting-desc">{{ desc }}</p>
+            </div>
+            <label class="switch">
+              <input
+                type="checkbox"
+                name="{{ name }}"
+                {%
+                if
+                value
+                %}checked{%
+                endif
+                %}
+              />
+              <span class="slider"></span>
+            </label>
+          </div>
+          {% endmacro %} {{ toggle_row( "Auto-open folder after organizing",
+          "Automatically open the organized folder when complete.", "auto_open",
+          settings.toggles.auto_open ) }} {{ toggle_row( "Show notifications",
+          "Display desktop notifications for important events.",
+          "notifications", settings.toggles.notifications ) }} {{ toggle_row(
+          "Confirm before organizing", "Show a confirmation dialog before
+          processing files.", "confirm", settings.toggles.confirm ) }} {{
+          toggle_row( "Preserve file timestamps", "Keep original creation and
+          modification dates.", "timestamps", settings.toggles.timestamps ) }}
+
+          <h2>Appearance</h2>
+          <p class="section-desc">Customize the visual interface.</p>
+
+          {{ toggle_row( "Dark Mode", "Use dark theme.", "dark_mode",
+          settings.toggles.dark_mode ) }} {{ toggle_row( "Animations", "Enable
+          transitions.", "animations", settings.toggles.animations ) }}
+        </div>
+
+        <!-- ORGANIZATION TAB -->
+        <div class="settings-section hidden">
+          <h2>Organization Rules</h2>
+          <p class="section-desc">
+            Define how files should be sorted into folders.
           </p>
 
-          <div class="form-group">
-            <label>Rules</label>
-            <input
-              name="rules"
-              placeholder="Images:.png,.jpg;Documents:.pdf,.docx"
-            />
-          </div>
+          <textarea
+            name="rules"
+            class="rules-box"
+            placeholder="Images: .jpg, .png; Documents: .pdf, .txt"
+          >
+{% if settings.rules %}
+{% for folder, exts in settings.rules.items() %}
+{{ folder }}: {{ exts|join(', ') }};
+{% endfor %}
+{% endif %}
+            </textarea
+          >
+        </div>
 
-          <button class="btn-primary">Save Settings</button>
-        </form>
+        <!-- ADVANCED TAB -->
+        <div class="settings-section hidden">
+          <h2>Advanced Settings</h2>
+          <p class="section-desc">Developer and power-user options.</p>
 
-        <p class="note">These rules override default file sorting.</p>
-      </div>
+          {{ toggle_row( "Enable debug logging", "Record detailed logs for
+          troubleshooting.", "debug", false ) }} {{ toggle_row( "Use
+          experimental sorter", "Try the new sorting engine (beta).",
+          "experimental", false ) }}
+        </div>
+
+        <!-- EXTRAS TAB -->
+        <div class="settings-section hidden">
+          <h2>Extras</h2>
+          <p class="section-desc">Optional enhancements.</p>
+
+          {{ toggle_row( "Show tips & hints", "Display helpful suggestions
+          throughout the app.", "tips", false ) }} {{ toggle_row( "Enable sound
+          effects", "Play subtle sounds for actions.", "sounds", false ) }}
+        </div>
+      </form>
+
+      <footer class="footer">
+        © 2025 Smart File Organiser | Built with Flask & Python
+      </footer>
     </div>
+
+    <script>
+      const tabs = document.querySelectorAll(".tab");
+      const sections = document.querySelectorAll(".settings-section");
+
+      tabs.forEach((tab, index) => {
+        tab.addEventListener("click", () => {
+          tabs.forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+
+          sections.forEach((s) => s.classList.add("hidden"));
+          sections[index].classList.remove("hidden");
+        });
+      });
+
+      function resetSettings() {
+        document.getElementById("settingsForm").reset();
+      }
+    </script>
+    <body class="{% if settings.toggles.dark_mode %}dark{% endif %}">
+    <body class="{% if not settings.toggles.animations %}no-anim{% endif %}">
   </body>
 </html>
