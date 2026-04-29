@@ -1,12 +1,14 @@
-from flask import Flask, render_template, request, send_file, redirect, session
+# right now, it does everything but return a file specficially when preview is off, also doesn't give a confrim message
+
+from flask import Flask, render_template, request, send_file, redirect, after_this_request, session
 import os, json, tempfile, uuid
 from zipfile import ZipFile
 from datetime import datetime
+import shutil
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-# ---------------- FILES ----------------
 USERS_FILE = "users.json"
 LOGS_FILE = "logs.json"
 SETTINGS_FILE = "settings.json"
@@ -19,106 +21,117 @@ ALLOWED_EXTENSIONS = {
 }
 
 MAX_SIZE_MB = 10
+TEMP_ROOT = "temp_uploads"
+os.makedirs(TEMP_ROOT, exist_ok=True)
 
 
-# ---------------- JSON HELPERS ----------------
+# ---------------- JSON ----------------
+
 def load_json(file):
     if not os.path.exists(file):
         return {}
+
     try:
-        with open(file, "r", encoding="utf-8") as f:
-            return json.load(f)
+        fileObject = open(file, "r", encoding="utf-8")
+        data = json.load(fileObject)
+        fileObject.close()
+        return data
     except:
         return {}
 
+
 def save_json(file, data):
-    with open(file, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4)
+    fileObject = open(file, "w", encoding="utf-8")
+    json.dump(data, fileObject, indent=4)
+    fileObject.close()
 
-# ---------------- GLOBAL SETTINGS INJECTION ----------------
-def inject_settings():
-    if "user_id" in session:
-        all_settings = load_json(SETTINGS_FILE)
 
-        default = {
-            "rules": {},
-            "toggles": {
-                "auto_open": False,
-                "notifications": True,
-                "confirm": True,
-                "timestamps": True,
-                "dark_mode": False,
-                "animations": True
-            }
-        }
+# ---------------- SETTINGS ----------------
 
-        user_settings = all_settings.get(session["user_id"], default)
-
-        # Ensure structure is always valid
-        user_settings.setdefault("rules", {})
-        user_settings.setdefault("toggles", default["toggles"])
-
-        return {"settings": user_settings}
-
-    # Not logged in → safe default
-    return {
-        "settings": {
-            "rules": {},
-            "toggles": {
-                "dark_mode": False,
-                "animations": True
-            }
-        }
-    }
-
-# ---------------- SETTINGS CORE ----------------
 def get_settings(user_id):
-    all_settings = load_json(SETTINGS_FILE)
-
-    default_settings = {
+    default = {
         "rules": {},
         "toggles": {
             "auto_open": False,
             "notifications": True,
             "confirm": True,
-            "timestamps": True,
             "dark_mode": False,
-            "animations": True
+            "preview": True
         }
     }
 
-    user_settings = all_settings.get(user_id, default_settings)
+    all_settings = load_json(SETTINGS_FILE)
 
-    user_settings.setdefault("rules", {})
-    user_settings.setdefault("toggles", default_settings["toggles"])
+    if not user_id or user_id not in all_settings:
+        return default
 
-    return user_settings
+    user = all_settings[user_id]
 
-# ---------------- FILE ORGANISER ----------------
+    if "rules" not in user:
+        user["rules"] = {}
+
+    # Merge toggles safely (prevents disappearing keys)
+    saved = user.get("toggles", {})
+    merged = default["toggles"].copy()
+
+    for key in merged:
+        if key in saved:
+            merged[key] = saved[key]
+
+    user["toggles"] = merged
+
+    return user
+
+
+# ---------------- AUTH ----------------
+
+def find_user_by_login(users, username_or_email, password):
+    for i in range(0, len(users)):
+        u = users[i]
+
+        if (u["username"] == username_or_email or u.get("email") == username_or_email) and u["password"] == password:
+            return u
+
+    return None
+
+
+def user_exists(users, username, email):
+    for i in range(0, len(users)):
+        u = users[i]
+
+        if u["username"] == username or u.get("email") == email:
+            return True
+
+    return False
+
+
+# ---------------- FILE RULES ----------------
+
 def get_folder(ext, settings):
     ext = ext.lower().strip()
-
     rules = settings.get("rules", {})
 
-    for folder, exts in rules.items():
-        cleaned = [e.lower().strip() for e in exts]
+    for folder in rules:
+        exts = rules[folder]
 
-        if ext in cleaned:
-            return folder
+        for i in range(0, len(exts)):
+            clean = exts[i].lower().strip()
 
-    # --- DEFAULT FALLBACK ---
-    if ext in [".jpg", ".jpeg", ".png"]:
+            if ext == clean:
+                return folder
+
+    if ext == ".jpg" or ext == ".jpeg" or ext == ".png":
         return "Images"
-    elif ext in [".pdf", ".docx", ".txt"]:
+    elif ext == ".pdf" or ext == ".docx" or ext == ".txt":
         return "Documents"
-    elif ext in [".py", ".html", ".css", ".js"]:
+    elif ext == ".py" or ext == ".html" or ext == ".css" or ext == ".js":
         return "CodeFiles"
     else:
         return "OtherFiles"
 
 
 def validate_file(file):
-    ext = os.path.splitext(file.filename)[1].lower().strip()
+    ext = os.path.splitext(file.filename)[1].lower()
 
     if ext not in ALLOWED_EXTENSIONS:
         return False
@@ -127,10 +140,14 @@ def validate_file(file):
     size = file.tell() / (1024 * 1024)
     file.seek(0)
 
-    return size <= MAX_SIZE_MB
+    if size <= MAX_SIZE_MB:
+        return True
+    else:
+        return False
 
 
-# ---------------- AUTH ----------------
+# ---------------- AUTH ROUTE ----------------
+
 @app.route("/auth", methods=["GET", "POST"])
 def auth():
     mode = request.args.get("mode", "login")
@@ -139,28 +156,27 @@ def auth():
     users = data.get("users", [])
 
     if request.method == "POST":
-        username_or_email = request.form["username"]
+        username = request.form["username"]
         password = request.form["password"]
         email = request.form.get("email")
 
-        # LOGIN
         if mode == "login":
-            for u in users:
-                if (u["username"] == username_or_email or u.get("email") == username_or_email) and u["password"] == password:
-                    session["user_id"] = u["id"]
-                    session["user"] = u["username"]
-                    return redirect("/")
+            user = find_user_by_login(users, username, password)
+
+            if user != None:
+                session["user_id"] = user["id"]
+                session["user"] = user["username"]
+                return redirect("/")
+
             return redirect("/auth?mode=login")
 
-        # SIGNUP
         if mode == "signup":
-            for u in users:
-                if u["username"] == username_or_email or u.get("email") == email:
-                    return redirect("/auth?mode=login")
+            if user_exists(users, username, email):
+                return redirect("/auth?mode=login")
 
             new_user = {
                 "id": str(uuid.uuid4()),
-                "username": username_or_email,
+                "username": username,
                 "email": email,
                 "password": password
             }
@@ -174,9 +190,11 @@ def auth():
 
             return redirect("/")
 
-    return render_template("auth.html", mode=mode, settings=get_settings(session.get("user_id")))   
+    return render_template("auth.html", mode=mode, settings=get_settings(session.get("user_id")))
+
 
 # ---------------- LOGOUT ----------------
+
 @app.route("/logout")
 def logout():
     session.clear()
@@ -184,85 +202,100 @@ def logout():
 
 
 # ---------------- HOME ----------------
+
 @app.route("/", methods=["GET", "POST"])
 def home():
     if "user_id" not in session:
         return redirect("/auth?mode=login")
 
     user_id = session["user_id"]
-    settings = get_settings(user_id)
-    toggles = settings["toggles"]
 
-    if request.method == "POST":
+    all_settings = load_json(SETTINGS_FILE)  # ✅ ADD THIS
 
-        if toggles["confirm"] and request.form.get("confirm_run") != "yes":
-            return "Confirmation required"
+    settings = all_settings.get(user_id, {
+        "rules": {},
+        "toggles": {
+            "confirm": True,
+            "dark_mode": False,
+            "preview": True
+        }
+    })
 
-        files = request.files.getlist("files")
-        if not files or files[0].filename == "":
-            return "No files"
+    if request.method == "GET":
+        return render_template("index.html", settings=settings)
 
-        base = tempfile.mkdtemp()
-        out_dir = os.path.join(base, "out")
-        os.makedirs(out_dir, exist_ok=True)
+    files = request.files.getlist("files")
 
-        count = 0
-        failed = []
+    files = [f for f in files if f.filename]
 
-        for file in files:
-            if not validate_file(file):
-                failed.append(file.filename)
-                continue
+    if len(files) == 0:
+        return "No files uploaded", 400
 
-            ext = os.path.splitext(file.filename)[1].lower().strip()
-            folder = get_folder(ext, settings)
+    if not files or files[0].filename == "":
+        return "No files uploaded"
 
-            target = os.path.join(out_dir, folder)
-            os.makedirs(target, exist_ok=True)
+    job_id = str(uuid.uuid4())
 
-            path = os.path.join(target, file.filename)
-            file.save(path)
+    input_dir = os.path.join(TEMP_ROOT, job_id)
+    os.makedirs(input_dir, exist_ok=True)
 
-            if toggles["timestamps"]:
-                now = datetime.now().timestamp()
-                os.utime(path, (now, now))
+    filenames = []
 
-            count += 1
+    for file in files:
+        file.save(os.path.join(input_dir, file.filename))
+        filenames.append(file.filename)
 
-        zip_path = os.path.join(base, "result.zip")
+    job_data = {
+    "user_id": user_id,
+    "path": input_dir,
+    "files": filenames
+}
 
-        with ZipFile(zip_path, "w") as zipf:
-            for root, _, files in os.walk(out_dir):
-                for f in files:
-                    full = os.path.join(root, f)
-                    zipf.write(full, os.path.relpath(full, out_dir))
+    job_file = os.path.join(TEMP_ROOT, f"{job_id}.json")
 
-        # LOGS
-        logs = load_json(LOGS_FILE)
-        log_list = logs.get("logs", [])
+    with open(job_file, "w") as f:
+        json.dump(job_data, f)
 
-        log_list.append({
-            "user_id": user_id,
-            "time": str(datetime.now()),
-            "files": count,
-            "failed": len(failed)
-        })
+        structure = {}
 
-        logs["logs"] = log_list
-        save_json(LOGS_FILE, logs)
+    for f in files:
+        ext = os.path.splitext(f.filename)[1]
+        folder = get_folder(ext, settings)
+        structure.setdefault(folder, []).append(f.filename)
 
-        if toggles["auto_open"]:
-            try:
-                os.startfile(out_dir)
-            except:
-                pass
+    # ---------------- DECISION LOGIC ----------------
+    confirm_enabled = settings["toggles"].get("confirm", True)
+    preview_enabled = settings["toggles"].get("preview", True)
 
-        return send_file(zip_path, as_attachment=True)
+    print("CONFIRM:", confirm_enabled, "| PREVIEW:", preview_enabled)
 
-    return render_template("index.html", settings=settings)
+    # ---------------- CASE 1: Confirm ON ----------------
+    if confirm_enabled:
+        return render_template(
+            "index.html",
+            settings=settings,
+            preview_mode=preview_enabled,   # 👈 FIX: respect preview toggle
+            preview_structure=structure,
+            job_id=job_id
+        )
+
+    # ---------------- CASE 2: Confirm OFF ----------------
+    if preview_enabled:
+        return render_template(
+        "index.html",
+        settings=settings,
+        preview_mode=False,
+        preview_structure=structure,
+        job_id=job_id,
+        confirm_only=True
+    )
+
+    # ---------------- CASE 3: Instant ----------------
+    return confirm(job_id)
 
 
 # ---------------- LOGS ----------------
+
 @app.route("/logs")
 def logs_page():
     if "user_id" not in session:
@@ -272,18 +305,130 @@ def logs_page():
     settings = get_settings(user_id)
 
     logs = load_json(LOGS_FILE).get("logs", [])
-    user_logs = [l for l in logs if l.get("user_id") == user_id]
+
+    user_logs = []
+    for i in range(0, len(logs)):
+        if logs[i].get("user_id") == user_id:
+            user_logs.append(logs[i])
+
+    total = len(user_logs)
+
+    files = 0
+    failed = 0
+
+    for log in user_logs:
+        files += len(log.get("files", []))
+        failed += log.get("failed", 0)
 
     summary = {
-        "total": len(user_logs),
-        "files": sum(l["files"] for l in user_logs),
-        "failed": sum(l["failed"] for l in user_logs)
+        "total": total,
+        "files": files,
+        "failed": failed
     }
 
     return render_template("logs.html", logs=user_logs, summary=summary, settings=settings)
 
 
+@app.route("/confirm/<job_id>", methods=["GET", "POST"])
+def confirm(job_id):
+
+    job_file = os.path.join(TEMP_ROOT, f"{job_id}.json")
+
+    if not os.path.exists(job_file):
+        return "Job expired", 404
+
+    # ---------------- LOAD JOB ----------------
+    with open(job_file, "r") as f:
+        job = json.load(f)
+
+    input_path = job.get("path")
+
+    if not input_path or not os.path.exists(input_path):
+        return "Missing uploaded files", 404
+
+    # ---------------- OUTPUT FOLDERS ----------------
+    out_base = tempfile.mkdtemp()
+    out_dir = os.path.join(out_base, "out")
+    os.makedirs(out_dir, exist_ok=True)
+
+    settings = get_settings(job["user_id"])
+
+    success_files = []
+    failed_files = []
+
+    # ---------------- PROCESS FILES ----------------
+    for filename in job["files"]:
+        full = os.path.join(input_path, filename)
+
+        if not os.path.exists(full):
+            failed_files.append({
+                "name": filename,
+                "reason": "File missing",
+                "status": "failed"
+            })
+            continue
+
+        try:
+            folder = get_folder(os.path.splitext(filename)[1], settings)
+            target = os.path.join(out_dir, folder)
+            os.makedirs(target, exist_ok=True)
+
+            shutil.move(full, os.path.join(target, filename))
+
+            success_files.append({
+                "name": filename,
+                "reason": "Organised successfully",
+                "status": "success"
+            })
+
+        except Exception as e:
+            failed_files.append({
+                "name": filename,
+                "reason": str(e),
+                "status": "failed"
+            })
+
+    # ---------------- ZIP ----------------
+    zip_path = os.path.join(out_base, "result.zip")
+
+    with ZipFile(zip_path, "w") as z:
+        for root, _, files in os.walk(out_dir):
+            for f in files:
+                full = os.path.join(root, f)
+                z.write(full, os.path.relpath(full, out_dir))
+
+    # ---------------- LOGGING ----------------
+    logs = load_json(LOGS_FILE)
+
+    if "logs" not in logs:
+        logs["logs"] = []
+
+    log_entry = {
+        "user_id": job["user_id"],
+        "time": str(datetime.now()),
+        "success": len(success_files),
+        "failed": len(failed_files),
+        "files": success_files + failed_files
+    }
+
+    logs["logs"].append(log_entry)
+    logs["logs"] = logs["logs"][-100:]  # limit size
+    save_json(LOGS_FILE, logs)
+
+    # ---------------- CLEANUP AFTER RESPONSE ----------------
+    @after_this_request
+    def cleanup(response):
+        shutil.rmtree(input_path, ignore_errors=True)
+        os.remove(job_file)
+        shutil.rmtree(out_base, ignore_errors=True)
+        return response
+    print("ZIP EXISTS:", os.path.exists(zip_path))
+    print("ZIP PATH:", zip_path)
+
+    return send_file(zip_path, as_attachment=True)
+
 # ---------------- SETTINGS ----------------
+
 @app.route("/settings", methods=["GET", "POST"])
 def settings_page():
     if "user_id" not in session:
@@ -292,40 +437,59 @@ def settings_page():
     user_id = session["user_id"]
     all_settings = load_json(SETTINGS_FILE)
 
-    all_settings = load_json(SETTINGS_FILE)
-    settings = all_settings.get(user_id, get_settings(user_id))
+    # ensure user exists
+    if user_id not in all_settings:
+        all_settings[user_id] = {
+            "rules": {},
+            "toggles": {
+                "auto_open": False,
+                "notifications": True,
+                "confirm": True,
+                "dark_mode": False,
+                "preview": True
+            }
+        }
 
     if request.method == "POST":
+
+        settings = all_settings[user_id]
 
         settings["toggles"] = {
             "auto_open": "auto_open" in request.form,
             "notifications": "notifications" in request.form,
             "confirm": "confirm" in request.form,
-            "timestamps": "timestamps" in request.form,
             "dark_mode": "dark_mode" in request.form,
-            "animations": "animations" in request.form,
+            "preview": "preview" in request.form
         }
 
-        rules_raw = request.form.get("rules", "")
+        # rules
         rules = {}
+        rules_raw = request.form.get("rules", "").strip()
 
-        if rules_raw.strip():
-            for part in rules_raw.split(";"):
-                if ":" in part:
-                    folder, exts = part.split(":")
-                    rules[folder.strip()] = [
-                    e.strip().lower()
-                    for e in exts.split(",")
-]
+        if rules_raw:
+            parts = rules_raw.split(";")
+
+            for part in parts:
+                if ":" not in part:
+                    continue
+
+                folder, exts_raw = part.split(":", 1)
+
+                exts = [e.strip().lower() for e in exts_raw.split(",") if e.strip()]
+
+                if exts:
+                    rules[folder.strip()] = exts
 
         settings["rules"] = rules
 
         all_settings[user_id] = settings
         save_json(SETTINGS_FILE, all_settings)
 
-    return render_template("settings.html", settings=settings)
-
-
+    return render_template(
+        "settings.html",
+        settings=all_settings[user_id]
+    )
 # ---------------- RUN ----------------
+
 if __name__ == "__main__":
     app.run(debug=True)

@@ -13,7 +13,7 @@
     />
   </head>
 
-  <body>
+  <body class="{% if settings.toggles.dark_mode %}dark{% endif %}">
     <!-- NAVBAR (copied from index.html) -->
     <header class="navbar">
       <div class="logo">Smart File Organiser</div>
@@ -52,99 +52,89 @@
 
       <!-- Tabs -->
       <div class="tabs">
-        <button class="tab active">General</button>
-        <button class="tab">Organisation</button>
-        <button class="tab">Advanced</button>
-        <button class="tab">Extras</button>
-      </div>
+    <button class="tab active">Behaviour</button>
+    <button class="tab">Organisation</button>
+    <button class="tab">Appearance</button>
+  </div>
 
       <!-- SETTINGS FORM -->
       <form id="settingsForm" method="POST">
-        <!-- GENERAL TAB -->
-        <div class="settings-section">
-          <h2>Behavior Settings</h2>
-          <p class="section-desc">Configure how the app responds to actions.</p>
 
-          {% macro toggle_row(title, desc, name, value) %}
-          <div class="setting-row">
-            <div class="setting-info">
-              <strong>{{ title }}</strong>
-              <p class="setting-desc">{{ desc }}</p>
-            </div>
-            <label class="switch">
-              <input
-                type="checkbox"
-                name="{{ name }}"
-                {%
-                if
-                value
-                %}checked{%
-                endif
-                %}
-              />
-              <span class="slider"></span>
-            </label>
-          </div>
-          {% endmacro %} {{ toggle_row( "Auto-open folder after organizing",
-          "Automatically open the organized folder when complete.", "auto_open",
-          settings.toggles.auto_open ) }} {{ toggle_row( "Show notifications",
-          "Display desktop notifications for important events.",
-          "notifications", settings.toggles.notifications ) }} {{ toggle_row(
-          "Confirm before organizing", "Show a confirmation dialog before
-          processing files.", "confirm", settings.toggles.confirm ) }} {{
-          toggle_row( "Preserve file timestamps", "Keep original creation and
-          modification dates.", "timestamps", settings.toggles.timestamps ) }}
+  <!-- BEHAVIOUR -->
+  <div class="settings-section">
 
-          <h2>Appearance</h2>
-          <p class="section-desc">Customize the visual interface.</p>
+    <h2>Behaviour</h2>
+    <p class="section-desc">Control how the organiser behaves.</p>
 
-          {{ toggle_row( "Dark Mode", "Use dark theme.", "dark_mode",
-          settings.toggles.dark_mode ) }} {{ toggle_row( "Animations", "Enable
-          transitions.", "animations", settings.toggles.animations ) }}
-        </div>
+    {% macro toggle_row(title, desc, name, value=false) %}
+    <div class="setting-row">
+      <div class="setting-info">
+        <strong>{{ title }}</strong>
+        <p class="setting-desc">{{ desc }}</p>
+      </div>
 
-        <!-- Organisation TAB -->
-        <div class="settings-section hidden">
-          <h2>Organisation Rules</h2>
-          <p class="section-desc">
-            Define how files should be sorted into folders.
-          </p>
+      <label class="switch">
+        <input type="checkbox" name="{{ name }}" {% if value %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+    {% endmacro %}
 
-          <textarea
-            name="rules"
-            class="rules-box"
-            placeholder="Images: .jpg, .png; Documents: .pdf, .txt"
-          >
+
+    {{ toggle_row(
+  "Preview file structure",
+  "Show how files will be organised before processing.",
+  "preview",
+  settings.toggles.preview
+) }}
+
+    {{ toggle_row(
+      "Confirm before organising",
+      "Ask before processing files.",
+      "confirm",
+      settings.toggles.confirm
+    ) }}
+
+  </div>
+
+  <!-- ORGANISATION RULES (IMPORTANT) -->
+  <div class="settings-section hidden">
+
+    <h2>Organisation Rules</h2>
+    <p class="section-desc">
+      Define how files are sorted into folders.
+    </p>
+
+    <textarea
+      name="rules"
+      class="rules-box"
+      placeholder="Images: .jpg, .png; Documents: .pdf, .txt"
+    >
 {% if settings.rules %}
 {% for folder, exts in settings.rules.items() %}
 {{ folder }}: {{ exts|join(', ') }};
 {% endfor %}
 {% endif %}
-            </textarea
-          >
-        </div>
+    </textarea>
 
-        <!-- ADVANCED TAB -->
-        <div class="settings-section hidden">
-          <h2>Advanced Settings</h2>
-          <p class="section-desc">Developer and power-user options.</p>
+  </div>
 
-          {{ toggle_row( "Enable debug logging", "Record detailed logs for
-          troubleshooting.", "debug", false ) }} {{ toggle_row( "Use
-          experimental sorter", "Try the new sorting engine (beta).",
-          "experimental", false ) }}
-        </div>
+  <!-- APPEARANCE -->
+  <div class="settings-section hidden">
 
-        <!-- EXTRAS TAB -->
-        <div class="settings-section hidden">
-          <h2>Extras</h2>
-          <p class="section-desc">Optional enhancements.</p>
+    <h2>Appearance</h2>
+    <p class="section-desc">Visual preferences.</p>
 
-          {{ toggle_row( "Show tips & hints", "Display helpful suggestions
-          throughout the app.", "tips", false ) }} {{ toggle_row( "Enable sound
-          effects", "Play subtle sounds for actions.", "sounds", false ) }}
-        </div>
-      </form>
+    {{ toggle_row(
+      "Dark Mode",
+      "Use dark theme.",
+      "dark_mode",
+      settings.toggles.dark_mode
+    ) }}
+
+  </div>
+
+</form>
 
       <footer class="footer">
         © 2025 Smart File Organiser | Built with Flask & Python
@@ -169,7 +159,5 @@
         document.getElementById("settingsForm").reset();
       }
     </script>
-    <body class="{% if settings.toggles.dark_mode %}dark{% endif %}">
-    <body class="{% if not settings.toggles.animations %}no-anim{% endif %}">
   </body>
 </html>
